@@ -734,19 +734,19 @@ dumpIcon (NSString *identifier) {
         
         image = [proxy tv_applicationFlatIcon];
         NSLog(@"exporting tvOS icon: %@", outputPath);
-      
+        
     } else {
         
         image = [UIImage _applicationIconImageForBundleIdentifier:[proxy applicationIdentifier] format:0 scale:[UIScreen mainScreen].scale];
         
         NSLog(@"exporting iOS icon: %@", outputPath);
-    
+        
     }
     [UIImagePNGRepresentation(image) writeToFile:outputPath atomically:YES];
     NSString *airDropURL = [NSString stringWithFormat:@"airdropper://%@", outputPath];
     NSURL *url = [NSURL URLWithString:airDropURL];
     [workspace openURL:url];
-
+    
 }
 
 void
@@ -763,7 +763,7 @@ dumpURL (CFStringRef URL, int Verbose)
             
             // Maybe it's a document type..
             id doxy = [objc_getClass("LSDocumentProxy") documentProxyForName:@"" type:(id)URL MIMEType:nil];
-             appsForURL = (CFArrayRef) [workspace performSelector:@selector(applicationsAvailableForOpeningDocument:) withObject:doxy];
+            appsForURL = (CFArrayRef) [workspace performSelector:@selector(applicationsAvailableForOpeningDocument:) withObject:doxy];
         }
         // if still no apps, then no claim.
         if (!appsForURL)
@@ -845,9 +845,9 @@ usage (char *ProgName)
     fprintf(stderr, "                metainfo\n");
     fprintf(stderr, "                [app|memory|notification|port|session]status\n");
 #endif
-    fprintf(stderr, "                whohas _url_ \n");
-    fprintf(stderr, "                types\n");
-    fprintf(stderr, "                dump\n");
+    fprintf(stderr, "                whohas _url_ or _uti_ (ie url or public.data \n");
+    fprintf(stderr, "                types (list UTI's)\n");
+    fprintf(stderr, "                dump (extensive dump of csstore file)\n");
     fprintf(stderr, "\nSet CFSHOW=1 to use CFshow in place of J's dumping function (which is still a work in progress)\n");
     exit(0);
 } // usage
@@ -1483,26 +1483,35 @@ main (int argc, char **argv)
     //
     if (strcmp(argv[1], "dump") == 0)
     {
-        
-        typedef int (*LSDisplayDataFunc)(FILE *, void*);
-        LSDisplayDataFunc       LSDisplayData;
+        BOOL thirteenOrGreater = false;
+        id doxy = [objc_getClass("LSDocumentProxy") documentProxyForName:@"" type:@"public.item" MIMEType:nil];//public.item
+        if ([doxy respondsToSelector:@selector(applicationsAvailableForOpeningWithStyle:limit:XPCConnection:error:)]){
+            thirteenOrGreater = true;
+        }
         
         // If you want to get the raw format of the file, you can dump with this, instead:
         //extern _LSDisplayRawStoreData(char *, int);
         //_LSDisplayRawStoreData("/var/mobile/Library/Caches/com.apple.LaunchServices-134.csstore", (void *) 0xff);
         
         
-        LSDisplayData = dlsym (CS_handle, "_LSDisplayData");
-        
-        if (!LSDisplayData) { fprintf(stderr, "Can't find LSDisplayData! Has Apple removed it by now? :-P"); exit(1);}
-        
+        // if (!LSDisplayData) { fprintf(stderr, "Can't find LSDisplayData! Has Apple removed it by now? :-P"); exit(1);}
         // The argument expected here is likely the name of the CoreServices (LaunchServices)
         // DataStore - in iOS "/var/mobile/Library/Caches/com.apple.LaunchServices-###.csstore"
         // but turns out NULL <del>works</del> on both OS X and iOS!
         
         // Until iOS 10, that is - wherein you need FILE * - so I use stderr
-        
-        int rc =  LSDisplayData(stderr,NULL);
+        int rc = 0;
+        if (thirteenOrGreater){
+            typedef int (*LSDisplayDataFunc)(FILE *, void*, void*, void*, void*, void*, void*);
+            LSDisplayDataFunc       LSDisplayData;
+            LSDisplayData = dlsym (CS_handle, "_LSDisplayData");
+            rc = LSDisplayData(stderr, NULL, 0, 0, 0, 0, 0);
+        } else {
+            typedef int (*LSDisplayDataFunc)(FILE *, void*);
+            LSDisplayDataFunc       LSDisplayData;
+            LSDisplayData = dlsym (CS_handle, "_LSDisplayData");
+            rc = LSDisplayData(stderr, NULL);
+        }
         if (rc != 0) { fprintf(stderr,"LSDisplayData returned %d\n",rc);}
         exit(rc);
         
