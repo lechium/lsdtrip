@@ -1,4 +1,9 @@
 #define ARM
+#import <Availability.h>
+#undef __TVOS_PROHIBITED
+#define __TVOS_PROHIBITED
+#undef __API_UNAVAILABLE
+#define __API_UNAVAILABLE(...)
 
 #include <objc/runtime.h>
 #include <libgen.h>
