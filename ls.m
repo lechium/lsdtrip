@@ -8,6 +8,8 @@
 #include <Foundation/Foundation.h> // NSObject
 #include <UIKit/UIKit.h>
 #endif
+#import "LSFindProcess.h"
+
 
 @interface UIImage (Private)
 + (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundleIdentifier format:(int)format scale:(CGFloat)scale;
@@ -15,6 +17,7 @@
 
 @interface LSDocumentProxy: NSObject
 
+-(NSString *)canonicalExecutablePath;
 +(id)documentProxyForName:(id)arg1 type:(id)arg2 MIMEType:(id)arg3 ;
 -(id)applicationsAvailableForOpeningWithError:(id*)arg1;
 //doxy = [objc_getClass("LSDocumentProxy") documentProxyForName:fileName type:fileType MIMEType:nil];
@@ -156,7 +159,8 @@ CFNotificationCenterRef  CFNotificationCenterGetDistributedCenter(void);
 // My own prototypes and globals:
 
 typedef int32_t LSSessionID;
-
+BOOL killFirst = false;
+int killPid = 0;
 #ifndef ARM
 extern CFTypeID _LSASNGetTypeID(void);
 int _LSASNExtractHighAndLowParts(void *, uint32_t *H, uint32_t *L);
@@ -750,6 +754,11 @@ dumpIcon (NSString *identifier) {
 }
 
 void
+openURL (CFStringRef URL){
+    
+}
+
+void
 dumpURL (CFStringRef URL, int Verbose)
 {
     
@@ -832,7 +841,7 @@ usage (char *ProgName)
 #ifdef ARM
     fprintf(stderr, "Usage: %s [apps|plugins|publicurls|privateurls] [-v]\n", basename(ProgName));
     fprintf(stderr, "                app _bundle_id_ (implies -v for this app)\n");
-    fprintf(stderr, "                launch _bundle_id_\n");
+    fprintf(stderr, "                launch _bundle_id_ [-k]\n");
     fprintf(stderr, "                advid [clear]\n");
     fprintf(stderr, "                exporticon _bundle_id_\n");
 #else
@@ -848,6 +857,7 @@ usage (char *ProgName)
     fprintf(stderr, "                whohas _url_ or _uti_ (ie url or public.data \n");
     fprintf(stderr, "                types (list UTI's)\n");
     fprintf(stderr, "                dump (extensive dump of csstore file)\n");
+    fprintf(stderr, "                open (open a URL)\n");
     fprintf(stderr, "\nSet CFSHOW=1 to use CFshow in place of J's dumping function (which is still a work in progress)\n");
     exit(0);
 } // usage
@@ -866,13 +876,18 @@ main (int argc, char **argv)
     dup2(2,3);
     dup2(1,2);
     
-    if (argc < 2)
-    {
+    if (argc < 2) {
         usage(argv[0]);
-        
     }
-    
+    /*
+    if (argc >= 3){
+        fprintf(stderr, "arc: %i 0: %s 1: %s 2: %s 3: %s\n", argc, argv[0], argv[1], argv[2], argv[3]);
+    }*/
     if (argv[2] && strcmp(argv[2], "-v")==0) verbose++;
+    if (argv[3] && strcmp(argv[3], "-k")==0) killFirst = true;
+    if (argc >= 4){
+        if (argv[4] && strcmp(argv[3], "-k")==0) killPid = atoi(argv[4]);
+    }
     
     // Getting the LS* classes and functions we need here:
     // ---------------------------------------------------
@@ -1084,7 +1099,20 @@ main (int argc, char **argv)
         
         
     }
-    
+    /*
+    if (strcmp(argv[1], "open") == 0){
+        if (!argv[2]) {
+            fprintf(stderr,"open: Option requires an URL as an argument!\n");
+            exit(3);
+        }
+        CFStringRef url = CFStringCreateWithCString(kCFAllocatorDefault, // CFAllocatorRef alloc,
+                                                    argv[2],  // const char *cStr,
+                                                    kCFStringEncodingUTF8); //CFStringEncoding encoding);
+        openURL(url);
+        
+        exit(0);
+    }
+    */
     if (strcmp(argv[1], "whohas") == 0)
     {
         
@@ -1209,16 +1237,36 @@ main (int argc, char **argv)
         
     }
     
-    if (strcmp(argv[1],"launch") == 0)
-    {
-        
-        
+    if (strcmp(argv[1],"launch") == 0) {
         if (!argv[2]) {
             fprintf(stderr,"launch: Option requires an argument!\n"); exit(3);
         }
+        
+   
+        
         CFStringRef bundleID = CFStringCreateWithCString(kCFAllocatorDefault, // CFAllocatorRef alloc,
                                                          argv[2],  // const char *cStr,
                                                          kCFStringEncodingUTF8); //CFStringEncoding encoding);
+        
+        if (killFirst){
+            
+            if (killPid != 0){
+                NSLog(@"killing pid: %i", killPid);
+                kill(killPid, 9);
+            } else {
+                id proxy = [LSApplicationProxy applicationProxyForIdentifier:(id)bundleID];
+                NSString *exe = [proxy canonicalExecutablePath];
+                NSLog(@"prox: %@", proxy);
+                NSLog(@"exe: %@", exe);
+                pid_t proc = [LSFindProcess find_process:[exe UTF8String]];
+                fprintf(stderr, "found proc: %lu\n", proc);
+                if (proc != 0){
+                    int status = kill(proc, 9);
+                }
+            }
+
+        }
+        sleep(1);
         int t =  (int) [workspace performSelector:@selector(openApplicationWithBundleID:) withObject:(id) bundleID ];
         
         
