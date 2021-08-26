@@ -4,21 +4,25 @@
 #define __TVOS_PROHIBITED
 #undef __API_UNAVAILABLE
 #define __API_UNAVAILABLE(...)
-
+#import <TargetConditionals.h>
 #include <objc/runtime.h>
 #include <libgen.h>
 #include <dlfcn.h>
 #include <CoreFoundation/CoreFoundation.h>
 #ifdef ARM
 #include <Foundation/Foundation.h> // NSObject
+#if TARGET_OS_IOS || TARGET_OS_TV
 #include <UIKit/UIKit.h>
+#endif
 #endif
 #import "LSFindProcess.h"
 
 
+#if TARGET_OS_IOS || TARGET_OS_TV
 @interface UIImage (Private)
 + (UIImage *)_applicationIconImageForBundleIdentifier:(NSString *)bundleIdentifier format:(int)format scale:(CGFloat)scale;
 @end
+#endif
 
 @interface LSDocumentProxy: NSObject
 
@@ -185,7 +189,8 @@ NSObject * workspace; // Intentionally void * so as to NOT involve @interface fi
 NSObject * fbSvcs;
 
 // OS X and iOS APIs are virtually identical, but the framework name is different
-#ifdef ARM
+//#ifdef ARM
+#if TARGET_OS_IOS || TARGET_OS_TV
 #define  CORE_SERVICE_FRAMEWORK  "/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices"
 #else
 #define  CORE_SERVICE_FRAMEWORK  "/System/Library/Frameworks/CoreServices.framework/CoreServices"
@@ -411,7 +416,11 @@ dumpApp (NSObject *AppRef, int Verbose)
     {
         // Dump more  - this is just a fraction of the info -
         // jtool -v -d LSApplicationProxy /Sy*/L*/Fra*/C*Se*/Frameworks/La*S*/LaunchServices
-        
+       
+        CFStringAppendFormat(out, // CFMutableStringRef theString,
+                             NULL,   // CFDictionaryRef formatOptions,
+                             CFSTR("\t\tbundleURL: %@\n"),
+                             (CFStringRef)[AppRef performSelector:@selector(bundleURL)]);
         
         CFStringAppendFormat(out, // CFMutableStringRef theString,
                              NULL,   // CFDictionaryRef formatOptions,
@@ -476,8 +485,9 @@ dumpApp (NSObject *AppRef, int Verbose)
                                  serializeCFArrayToCFString((CFArrayRef)UIBackgroundModes, CFSTR(",")));
         
         CFStringAppend(out, CFSTR("\n"));
-        
-#ifdef ARM
+  
+#if TARGET_OS_IOS || TARGET_OS_TV
+//#ifdef ARM
         // Only on iOS
         CFStringAppendFormat(out, // CFMutableStringRef theString,
                              NULL,   // CFDictionaryRef formatOptions,
@@ -552,7 +562,10 @@ dumpApp (NSObject *AppRef, int Verbose)
         } // entitlements
         else
             CFStringAppend(out,CFSTR("\t\tEntitlements: None\n"));
-        
+       
+	//bundleURL
+
+
     } // Verbose
     
     return (out);
@@ -732,7 +745,7 @@ void dumpShmem (struct LSShmem *Shmem)
 
 void
 dumpIcon (NSString *identifier) {
-    
+#if TARGET_OS_IOS || TARGET_OS_TV 
     [[NSBundle bundleWithPath:@"/System/Library/PrivateFrameworks/TVKit.framework"] load];
     id proxy = [LSApplicationProxy applicationProxyForIdentifier:identifier];
     NSLog(@"proxy %@", proxy);
@@ -755,7 +768,7 @@ dumpIcon (NSString *identifier) {
     NSString *airDropURL = [NSString stringWithFormat:@"airdropper://%@", outputPath];
     NSURL *url = [NSURL URLWithString:airDropURL];
     [workspace openURL:url];
-    
+#endif 
 }
 
 void
@@ -954,7 +967,6 @@ main (int argc, char **argv)
         for (i = 0; i < len ; i++)
         {
             CFTypeRef app = CFArrayGetValueAtIndex(apps,i);
-            
             // Got app: Dump if want all, or if matches id.
             // I'm sure there's some Workspace method I missed to get an app by bundle ID, instead
             // of iterating over all of them..
