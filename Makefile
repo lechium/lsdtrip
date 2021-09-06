@@ -1,11 +1,11 @@
 BINDIR   ?= bin
 PREFIX   ?= usr
 DESTDIR  ?= /
-SRC      := $(wildcard *.m)
+SRC      := $(wildcard *.m) $(wildcard FindProcess/*.m)
 OBJ      := $(SRC:.m=.o)
-CFLAGS   := -ObjC -O2 -g -fno-rtti -fvisibility=hidden  -fvisibility-inlines-hidden
-CPPFLAGS := 
-LDFLAGS  := -framework Foundation -framework MobileCoreServices -framework UIKit
+CFLAGS   := -ObjC -O2 -g -fno-rtti -fvisibility=hidden  -fvisibility-inlines-hidden -IFindProcess
+CPPFLAGS := $(CFLAGS)
+LDFLAGS  := -framework Foundation -framework MobileCoreServices -framework UIKit -IFindProcess
 LDID     := ldid
 TARGET   := lsdtrip
 

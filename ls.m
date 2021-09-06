@@ -1,5 +1,7 @@
 #define ARM
 #import <Availability.h>
+#undef __TVOS_UNAVAILABLE
+#define __TVOS_UNAVAILABLE
 #undef __TVOS_PROHIBITED
 #define __TVOS_PROHIBITED
 #undef __API_UNAVAILABLE
@@ -12,7 +14,8 @@
 #ifdef ARM
 #include <Foundation/Foundation.h> // NSObject
 #if TARGET_OS_IOS || TARGET_OS_TV
-#include <UIKit/UIKit.h>
+#include <UIKit/UIImage.h>
+#include <UIKit/UIScreen.h>
 #endif
 #endif
 #import "LSFindProcess.h"
@@ -170,7 +173,8 @@ CFNotificationCenterRef  CFNotificationCenterGetDistributedCenter(void);
 typedef int32_t LSSessionID;
 BOOL killFirst = false;
 int killPid = 0;
-#ifndef ARM
+#if TARGET_OS_OSX
+//#ifndef ARM
 extern CFTypeID _LSASNGetTypeID(void);
 int _LSASNExtractHighAndLowParts(void *, uint32_t *H, uint32_t *L);
 extern CFDictionaryRef _LSCopyApplicationInformation (signed int,
@@ -310,8 +314,8 @@ void keyDumper (CFStringRef Key, void *Value, void *Nesting)
         
     }
     
-    
-#ifndef ARM
+#if TARGET_OS_OSX    
+//#ifndef ARM
     if (valueTypeID == _LSASNGetTypeID() )
     {
         uint32_t h, l;
@@ -427,8 +431,9 @@ dumpApp (NSObject *AppRef, int Verbose)
                              CFSTR("\t\tExecutable: %@\n"),
                              [AppRef performSelector:@selector(bundleExecutable)]);
         
-#ifdef ARM
-        // Set on iOS. Can also use versionIdentifier here, but that requires working back from the
+//#ifdef ARM
+#if TARGET_OS_IOS || TARGET_OS_TV
+ 	// Set on iOS. Can also use versionIdentifier here, but that requires working back from the
         // number to a version string (which LaunchServices lets you do with
         // LSVersionNumberCopyStringRepresentation/LSVersionNumberGetXXX()
         // But why bother when you have a short version string..
@@ -702,8 +707,8 @@ struct LSShmem {
     
     
 };
-
-#ifndef ARM
+#if TARGET_OS_OSX
+//#ifndef ARM
 void dumpShmem (struct LSShmem *Shmem)
 {
     printf("Shmem at address %p (%d pages = 0x%x):\n", Shmem,
@@ -855,8 +860,8 @@ int notificationCallbackFunc(int a, CFDictionaryRef *Notif, void *todo1, void *x
 void
 usage (char *ProgName)
 {
-    
-#ifdef ARM
+#if TARGET_OS_IOS || TARGET_OS_TV
+//#ifdef ARM
     fprintf(stderr, "Usage: %s [apps|plugins|publicurls|privateurls] [-v]\n", basename(ProgName));
     fprintf(stderr, "                app _bundle_id_ (implies -v for this app)\n");
     fprintf(stderr, "                launch _bundle_id_ [-k]\n");
@@ -917,8 +922,8 @@ main (int argc, char **argv)
     void *CS_handle = dlopen (CORE_SERVICE_FRAMEWORK, RTLD_NOW);
     if (!CS_handle) { fprintf(stderr,"Can't find %s!\n", CORE_SERVICE_FRAMEWORK); exit(2); };
     
-    
-#ifdef ARM
+ #if TARGET_OS_IOS || TARGET_OS_TV   
+//#ifdef ARM
     
     
     if (strcmp(argv[1],"running") == 0)
@@ -1004,7 +1009,8 @@ main (int argc, char **argv)
     
     if (strcmp(argv[1], "publicurls") == 0)
     {
-#ifdef ARM
+#if TARGET_OS_IOS || TARGET_OS_TV
+//#ifdef ARM
         CFArrayRef puburls =  (CFArrayRef) [workspace performSelector:@selector(publicURLSchemes)];
         
         
@@ -1034,7 +1040,8 @@ main (int argc, char **argv)
     
     if (strcmp(argv[1], "privateurls") == 0)
     {
-#ifndef ARM
+#if TARGET_OS_OSX
+	    //#ifndef ARM
         
         // MacOS's LSApplicationWorkSpace does not respond to private URLs..
         
@@ -1196,8 +1203,8 @@ main (int argc, char **argv)
         exit(0);
         
     }
-    
-#ifdef ARM
+ #if TARGET_OS_IOS || TARGET_OS_TV
+//#ifdef ARM
     if (strcmp(argv[1],"open") == 0)
     {
         
@@ -1297,8 +1304,8 @@ main (int argc, char **argv)
     }
     
     
-    
-#ifndef ARM
+#if TARGET_OS_OSX    
+//#ifndef ARM
     
     // This only works on MacOS
     // because A) API doesn't exist in *OS
