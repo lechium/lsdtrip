@@ -871,13 +871,13 @@ usage (char *ProgName)
 #if TARGET_OS_IOS || TARGET_OS_TV
 //#ifdef ARM
     fprintf(stderr, "Usage: %s %s [apps|plugins|publicurls|privateurls] [-v]\n", basename(ProgName), tripVersionNumber);
-    fprintf(stderr, "                app _bundle_id_ (implies -v for this app)\n");
-    fprintf(stderr, "                launch _bundle_id_ [-k]\n");
+    fprintf(stderr, "                app _bundle_id_ or _localized_name_ (implies -v for this app)\n");
+    fprintf(stderr, "                launch _bundle_id_ or _localized_name_ [-k]\n");
     fprintf(stderr, "                advid [clear]\n");
-    fprintf(stderr, "                exporticon _bundle_id_\n");
+    fprintf(stderr, "                exporticon _bundle_id_ or _localized_name_\n");
 #else
     fprintf(stderr, "Usage: %s [apps|plugins] [-v]\n", basename(ProgName));
-    fprintf(stderr, "                app _bundle_id_ (implies -v for this app)\n");
+    fprintf(stderr, "                app _bundle_id_ or localized_name (implies -v for this app)\n");
     fprintf(stderr, "                front [-v]\n");
     fprintf(stderr, "                visible\n");
     fprintf(stderr, "                listen          (Get app launch/foreground notifications - cool)\n");
