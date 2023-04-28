@@ -760,7 +760,7 @@ void
 dumpIcon (NSString *identifier) {
 #if TARGET_OS_IOS || TARGET_OS_TV 
     [[NSBundle bundleWithPath:@"/System/Library/PrivateFrameworks/TVKit.framework"] load];
-    id proxy = [LSApplicationProxy applicationProxyForIdentifier:identifier];
+    id proxy = [LSHelperClass smartProxyFromValue:identifier];
     NSLog(@"proxy %@", proxy);
     UIImage *image = nil;
     NSString *outputPath = [NSString stringWithFormat:@"/var/mobile/Documents/%@.png", [proxy localizedName]];
