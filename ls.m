@@ -466,6 +466,12 @@ dumpApp (NSObject *AppRef, int Verbose)
                              CFSTR("\t\tDisk Usage (Static): %@\n"),
                              (CFStringRef)[AppRef performSelector:@selector(staticDiskUsage)]);
         
+        CFStringAppendFormat(out, // CFMutableStringRef theString,
+                             NULL,   // CFDictionaryRef formatOptions,
+                             CFSTR("\t\tDisk Usage (Dynamic): %@\n"),
+                             [LSHelperClass dynamicDiskUsageForProxy:AppRef]);
+        
+        
         
 #if 0
         // This apparently doesn't work in 9.2 anymore. Not sure about this..
@@ -543,7 +549,7 @@ dumpApp (NSObject *AppRef, int Verbose)
         CFStringAppendFormat(out, // CFMutableStringRef theString,
                              NULL,   // CFDictionaryRef formatOptions,
                              CFSTR("\t\tContainer URL: %@\n"),
-                             [AppRef performSelector:@selector(containerURL)]);
+                             [LSHelperClass appContainerForIdentifier:appID]);//[AppRef performSelector:@selector(containerURL)]);
         
         CFDictionaryRef entitlements = (CFDictionaryRef) [AppRef performSelector:@selector(entitlements)];
         
@@ -958,6 +964,14 @@ main (int argc, char **argv)
             wantedBundleID = CFStringCreateWithCString(kCFAllocatorDefault, // CFAllocatorRef alloc,
                                                        argv[2],  // const char *cStr,
                                                        kCFStringEncodingUTF8); //CFStringEncoding encoding);
+            
+            CFTypeRef app = [LSHelperClass smartProxyFromValue:(id)wantedBundleID];
+            if (app) {
+                CFStringRef dump = dumpApp(app, 1);
+                CFShow(dump);
+                CFRelease(dump);
+                exit(0); // only one match here.
+            }
         }
         
         CFArrayRef apps =  (CFArrayRef) [workspace performSelector:@selector(allApplications)];
@@ -974,33 +988,17 @@ main (int argc, char **argv)
         {
             CFTypeRef app = CFArrayGetValueAtIndex(apps,i);
             // Got app: Dump if want all, or if matches id.
-            // I'm sure there's some Workspace method I missed to get an app by bundle ID, instead
-            // of iterating over all of them..
             
             CFStringRef appID = (CFStringRef) [(id)app performSelector:@selector(applicationIdentifier)];
-            
-            if (appID && wantedBundleID)
-            {
-                if (CFEqual(appID, wantedBundleID))
-                {
-                    CFStringRef dump = dumpApp(app, 1);
-                    CFShow(dump);
-                    CFRelease(dump);
-                    exit(0); // only one match here.
-                }
-            }
-            else
-            {
+            if (!wantedBundleID) {
                 CFStringRef dump = dumpApp(app, verbose);
                 CFShow(dump);
                 CFRelease(dump);
-                
-                
             }
         }
         
         if ( wantedBundleID) {
-            fprintf(stderr,"Application with Bundle ID %s not found. Try '%s apps' first, and remember case-sensitivity\n",
+            fprintf(stderr,"Application with Bundle ID or Executable name %s not found. Try '%s apps' first, and remember case-sensitivity\n",
                     argv[2], argv[0]);
             exit(2);
         }
