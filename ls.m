@@ -19,6 +19,7 @@
 #endif
 #endif
 #import "LSFindProcess.h"
+#import "LSHelperClass.h"
 
 
 #if TARGET_OS_IOS || TARGET_OS_TV
@@ -1272,6 +1273,13 @@ main (int argc, char **argv)
                                                          argv[2],  // const char *cStr,
                                                          kCFStringEncodingUTF8); //CFStringEncoding encoding);
         
+        BOOL validBundle = [LSHelperClass validBundleId:(id)bundleID];
+        if (!validBundle) {
+            NSLog(@"invalid bundleID: %@", (id)bundleID);
+            bundleID = [LSHelperClass bundleIDForProcessName:(id)bundleID];
+            NSLog(@"found bundle id: %@", bundleID);
+        }
+        
         if (killFirst){
             
             if (killPid != 0){
@@ -1279,6 +1287,10 @@ main (int argc, char **argv)
                 kill(killPid, 9);
             } else {
                 id proxy = [LSApplicationProxy applicationProxyForIdentifier:(id)bundleID];
+                if (!proxy) {
+                    proxy = [LSHelperClass proxyForProcessName:(id)bundleID];
+                    NSLog(@"proxy was nil, checking via name: %@", proxy);
+                }
                 NSString *exe = [proxy canonicalExecutablePath];
                 NSLog(@"prox: %@", proxy);
                 NSLog(@"exe: %@", exe);
