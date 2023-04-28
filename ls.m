@@ -21,6 +21,7 @@
 #import "LSFindProcess.h"
 #import "LSHelperClass.h"
 
+char * tripVersionNumber = "1.0";
 
 #if TARGET_OS_IOS || TARGET_OS_TV
 @interface UIImage (Private)
@@ -869,7 +870,7 @@ usage (char *ProgName)
 {
 #if TARGET_OS_IOS || TARGET_OS_TV
 //#ifdef ARM
-    fprintf(stderr, "Usage: %s [apps|plugins|publicurls|privateurls] [-v]\n", basename(ProgName));
+    fprintf(stderr, "Usage: %s %s [apps|plugins|publicurls|privateurls] [-v]\n", basename(ProgName), tripVersionNumber);
     fprintf(stderr, "                app _bundle_id_ (implies -v for this app)\n");
     fprintf(stderr, "                launch _bundle_id_ [-k]\n");
     fprintf(stderr, "                advid [clear]\n");
