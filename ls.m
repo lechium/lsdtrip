@@ -467,10 +467,13 @@ dumpApp (NSObject *AppRef, int Verbose)
                              CFSTR("\t\tDisk Usage (Static): %@\n"),
                              (CFStringRef)[AppRef performSelector:@selector(staticDiskUsage)]);
         
+#if !TARGET_OS_OSX
+        
         CFStringAppendFormat(out, // CFMutableStringRef theString,
                              NULL,   // CFDictionaryRef formatOptions,
                              CFSTR("\t\tDisk Usage (Dynamic): %@\n"),
                              [LSHelperClass dynamicDiskUsageForProxy:AppRef]);
+#endif
         
         
         

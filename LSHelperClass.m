@@ -52,7 +52,7 @@
             return [proxy dynamicDiskUsage];
     } else {
         NSString *container = [[self appContainerForIdentifier:[proxy bundleIdentifier]] path];
-        if (container){
+        if (container != nil){
             return [NSNumber numberWithUnsignedInteger:[NSFileManager sizeForFolderAtPath:container]];
         }
     }
@@ -71,7 +71,10 @@
         }
     }
     NSDictionary *appDict = [self appContainerDictionary:false][newId];
-    return [NSURL fileURLWithPath:appDict[@"path"]];
+    if (appDict) {
+        return [NSURL fileURLWithPath:appDict[@"path"]];
+    }
+    return nil;
 }
 
 + (NSDictionary *)appContainerDictionary:(BOOL)withSize {
