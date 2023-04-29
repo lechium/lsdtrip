@@ -7,6 +7,7 @@
 
 @interface NSObject (lazy)
 - (id)diskUsage; //_LSDiskUsage
+- (id)dynamicUsage;
 @end
 
 @interface LSApplicationProxy : NSObject

@@ -304,13 +304,15 @@ void keyDumper (CFStringRef Key, void *Value, void *Nesting)
         
         
     }
-    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-function-pointer-types"
     if (valueTypeID == CFDictionaryGetTypeID())
     {
         printf(" (dict)\n");
         CFDictionaryApplyFunction(Value, // CFDictionaryRef theDict,
                                   keyDumper, // CFDictionaryApplierFunction CF_NOESCAPE applier,
                                   (void *)1); //void *context);
+
         printf("\n");
         return;
         
@@ -344,7 +346,7 @@ dumpDict(CFDictionaryRef dict)
                               NULL); //void *context);
 }
 
-
+#pragma clang diagnostic pop
 CFStringRef
 serializeCFArrayToCFString (CFArrayRef Array, CFStringRef Delimiter)
 {
@@ -531,10 +533,12 @@ dumpApp (NSObject *AppRef, int Verbose)
         fprintf(stderr, "\t\tBundle Mod Time: %llu\n", modTime);
 #endif
         
-        
+        //
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-to-int-cast"
         int  cont = (int)([AppRef performSelector:@selector( isContainerized)]);
         int  restricted  = (int)([AppRef performSelector:@selector( isRestricted)]);
-        
+#pragma clang diagnostic pop
         CFStringAppendFormat(out,
                              NULL,
                              CFSTR("\t\tContainerized: %@\n\t\tRestricted: %@\n"),
@@ -553,15 +557,17 @@ dumpApp (NSObject *AppRef, int Verbose)
         CFStringAppendFormat(out, // CFMutableStringRef theString,
                              NULL,   // CFDictionaryRef formatOptions,
                              CFSTR("\t\tContainer URL: %@\n"),
-                             [LSHelperClass appContainerForIdentifier:appID]);//[AppRef performSelector:@selector(containerURL)]);
+                             [LSHelperClass appContainerForIdentifier:(NSString *)appID]);//[AppRef performSelector:@selector(containerURL)]);
         
         CFDictionaryRef entitlements = (CFDictionaryRef) [AppRef performSelector:@selector(entitlements)];
         
         if (entitlements &&  CFDictionaryGetCount(entitlements) )
         {
-            
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
             CFDataRef xml = CFPropertyListCreateXMLData(kCFAllocatorDefault,
                                                         (CFPropertyListRef)entitlements);
+#pragma clang diagnostic pop
             
             CFStringRef xmlAsString = CFStringCreateFromExternalRepresentation(NULL, xml, kCFStringEncodingUTF8);
             
@@ -783,7 +789,7 @@ dumpIcon (NSString *identifier) {
     [UIImagePNGRepresentation(image) writeToFile:outputPath atomically:YES];
     NSString *airDropURL = [NSString stringWithFormat:@"airdropper://%@", outputPath];
     NSURL *url = [NSURL URLWithString:airDropURL];
-    [workspace openURL:url];
+    [(LSApplicationWorkspace*)workspace openURL:url];
 #endif 
 }
 
@@ -802,8 +808,10 @@ dumpURL (CFStringRef URL, int Verbose)
     CFStringAppend(out, URL);
     if (Verbose) {
         CFArrayRef appsForURL = (CFArrayRef) [workspace performSelector:@selector(applicationsAvailableForHandlingURLScheme:) withObject:(id)URL];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreceiver-expr"
         if ([appsForURL count] == 0) {
-            
+#pragma clang diagnostic pop
             // Maybe it's a document type..
             id doxy = [objc_getClass("LSDocumentProxy") documentProxyForName:@"" type:(id)URL MIMEType:nil];
             appsForURL = (CFArrayRef) [workspace performSelector:@selector(applicationsAvailableForOpeningDocument:) withObject:doxy];
@@ -863,8 +871,10 @@ int notificationCallbackFunc(int a, CFDictionaryRef *Notif, void *todo1, void *x
     
     
     printf("Notification Received:\n");
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
     dumpDict(Notif);
-    
+#pragma clang diagnostic pop
     return 0;
 }
 
@@ -1197,8 +1207,10 @@ main (int argc, char **argv)
         }
         else {
             // just show
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
             CFStringRef advid = [workspace performSelector:@selector(deviceIdentifierForAdvertising)];
-            
+#pragma clang diagnostic pop
             CFShow(advid);
             
         }
@@ -1224,8 +1236,10 @@ main (int argc, char **argv)
                                        NULL);   // CFURLRef baseURL);
         
         printf("CREATED URL %p\n", theURL);
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-to-int-cast"
         int t =  (int) [workspace performSelector:@selector(openURL:) withObject:(id) theURL ];
+#pragma clang diagnostic pop
         fprintf(stderr, "%s %s (RC: %d)\n",
                 t ? "opened" : "Unable to open",
                 argv[2], t);
@@ -1258,8 +1272,10 @@ main (int argc, char **argv)
         CFStringRef bundleID = CFStringCreateWithCString(kCFAllocatorDefault, // CFAllocatorRef alloc,
                                                          argv[2],  // const char *cStr,
                                                          kCFStringEncodingUTF8); //CFStringEncoding encoding);
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
         dumpIcon(bundleID);
+#pragma clang diagnostic pop
         exit(0);
         
     }
@@ -1278,7 +1294,7 @@ main (int argc, char **argv)
         BOOL validBundle = [LSHelperClass validBundleId:(id)bundleID];
         if (!validBundle) {
             NSLog(@"invalid bundleID: %@", (id)bundleID);
-            bundleID = [LSHelperClass bundleIDForProcessName:(id)bundleID];
+            bundleID = (CFStringRef)[LSHelperClass bundleIDForProcessName:(id)bundleID];
             NSLog(@"found bundle id: %@", bundleID);
         }
         
@@ -1297,7 +1313,7 @@ main (int argc, char **argv)
                 NSLog(@"prox: %@", proxy);
                 NSLog(@"exe: %@", exe);
                 pid_t proc = [LSFindProcess find_process:[exe UTF8String]];
-                fprintf(stderr, "found proc: %lu\n", proc);
+                fprintf(stderr, "found proc: %d\n", proc);
                 if (proc != 0){
                     int status = kill(proc, 9);
                 }
@@ -1305,8 +1321,10 @@ main (int argc, char **argv)
 
         }
         sleep(1);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-to-int-cast"
         int t =  (int) [workspace performSelector:@selector(openApplicationWithBundleID:) withObject:(id) bundleID ];
-        
+#pragma clang diagnostic pop
         
         
         fprintf(stderr, "%s %s\n",
