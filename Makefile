@@ -1,8 +1,9 @@
 BINDIR   ?= bin
 PREFIX   ?= usr
 DESTDIR  ?= /
+BUILDDIR := ./build
 SRC      := $(wildcard *.m) $(wildcard FindProcess/*.m)
-OBJ      := $(SRC:.m=.o)
+OBJ      := $(SRC:%.m=$(BUILDDIR)/%.o)
 CFLAGS   := -ObjC -O2 -g -fno-rtti -fvisibility=hidden  -fvisibility-inlines-hidden -IFindProcess
 CPPFLAGS := $(CFLAGS)
 LDFLAGS  := -framework Foundation -framework MobileCoreServices -framework UIKit -IFindProcess
@@ -16,26 +17,28 @@ CC      = xcrun -sdk appletvos clang -arch arm64
 
 all: $(TARGET)
 
-%.o: %.m %.d Makefile
-	$(CC) -c $(CFLAGS) -o $@ $<
+$(BUILDDIR)/%.o: %.m $(BUILDDIR)/%.d Makefile
+	@mkdir -p $(dir $@)
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 $(DESTDIR)/$(PREFIX)/$(BINDIR):
 	mkdir -p $@
 
-$(TARGET).bin: $(OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+$(BUILDDIR)/$(TARGET).bin: $(OBJ)
+	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
-$(TARGET): $(TARGET).bin
-	$(LDID) -Sent.plist $^
-	cp $^ $@
+$(TARGET): $(BUILDDIR)/$(TARGET).bin
+	@$(LDID) -Sent.plist $^
+	@cp $^ $@
 
 install: all | $(DESTDIR)/$(PREFIX)/$(BINDIR)
 	cp $(TARGET) $(DESTDIR)/$(PREFIX)/$(BINDIR)/
 
 clean:
-	rm -rf $(TARGET) $(TARGET).bin *.o *.d
+	rm -rf $(TARGET) $(BUILDDIR)/$(TARGET).bin $(BUILDDIR)/*.o $(BUILDDIR)/*.d $(BUILDDIR)/**/*.o $(BUILDDIR)/**/*.d
 
-%.d: %.m
+$(BUILDDIR)/%.d: %.m
+	@mkdir -p $(dir $@)
 	@echo generating depends for $<
 	@set -e; rm -f $@; \
 	$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
