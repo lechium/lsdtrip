@@ -1449,8 +1449,10 @@ main (int argc, char **argv)
                                          (const void **)        vals, // const void **values,
                                          2,    // CFIndex numValues,
                                          &kCFTypeArrayCallBacks); //const CFArrayCallBacks *callBacks);
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
         CFDictionaryRef meta = _LSCopyMetaApplicationInformation(-2,what);
+#pragma clang diagnostic pop
         
         dumpDict(meta);
         exit(0);
@@ -1499,21 +1501,25 @@ main (int argc, char **argv)
         
         
         // 11/1/2017 This was missing from earlier version
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wimplicit-int"
         extern _LSModifyNotification(LSNotificationReceiverRef ref,
                                      int numKeys,
                                      uint32_t    *mask,
                                      uint32_t   unknown,
                                      uint32_t   unknown1,
                                      uint32_t   unknown2);
+#pragma clang diagnostic pop
         
-        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpointer-sign"
         int mask=-1; // get all
         _LSModifyNotification(ref, //
                               1,  // uint32
                               &mask,
                               0,
                               0, 0);
+#pragma clang diagnostic pop
         
         
         

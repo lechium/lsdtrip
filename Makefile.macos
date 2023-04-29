@@ -2,12 +2,12 @@ BINDIR   ?= bin
 PREFIX   ?= usr
 DESTDIR  ?= /
 BUILDDIR := ./build/macos
-SRC      := $(wildcard *.m) $(wildcard FindProcess/*.m)
+SRC      := $(wildcard src/*.m) $(wildcard src/FindProcess/*.m)
 OBJ      := $(SRC:%.m=$(BUILDDIR)/%.o)
-CFLAGS   := -ObjC -O2 -g -fno-rtti -fvisibility=hidden  -fvisibility-inlines-hidden -IFindProcess
+CFLAGS   := -ObjC -O2 -g -fno-rtti -fvisibility=hidden  -fvisibility-inlines-hidden -Isrc/FindProcess
 CPPFLAGS := $(CFLAGS)
-LDFLAGS  := -framework Foundation -framework CoreServices -framework AppKit -IFindProcess
-LDFLAGS_MAC := -framework Foundation -framework CoreServices -framework AppKit -IFindProcess
+LDFLAGS  := -framework Foundation -framework CoreServices -framework AppKit -Isrc/FindProcess
+LDFLAGS_MAC := -framework Foundation -framework CoreServices -framework AppKit -Isrc/FindProcess
 LDID     := ldid
 TARGET   := lsdtrip_mac
 
