@@ -20,6 +20,9 @@
 #endif
 #import "LSFindProcess.h"
 #import "LSHelperClass.h"
+#if TARGET_OS_OSX
+#import <AppKit/AppKit.h>
+#endif
 
 char * tripVersionNumber = "1.0";
 
@@ -891,6 +894,7 @@ usage (char *ProgName)
 #else
     fprintf(stderr, "Usage: %s [apps|plugins] [-v]\n", basename(ProgName));
     fprintf(stderr, "                app _bundle_id_ or localized_name (implies -v for this app)\n");
+    fprintf(stderr, "                launch _bundle_id_ or _localized_name_\n");
     fprintf(stderr, "                front [-v]\n");
     fprintf(stderr, "                visible\n");
     fprintf(stderr, "                listen          (Get app launch/foreground notifications - cool)\n");
@@ -1297,7 +1301,24 @@ main (int argc, char **argv)
             bundleID = (CFStringRef)[LSHelperClass bundleIDForProcessName:(id)bundleID];
             NSLog(@"found bundle id: %@", bundleID);
         }
+#if TARGET_OS_OSX
         
+        NSWorkspace *ws = [NSWorkspace sharedWorkspace];
+        id proxy = [LSApplicationProxy applicationProxyForIdentifier:(id)bundleID];
+        NSURL *path = [proxy bundleURL];
+        if (@available(macOS 10.15, *)) {
+            [ws openApplicationAtURL:path configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:^(NSRunningApplication * _Nullable app, NSError * _Nullable error) {
+                NSLog(@"running app: %@ error: %@", app, error);
+                exit(0);
+            }];
+        } else {
+            // Fallback on earlier versions
+            NSLog(@"error: need to implement for earlier versions...");
+            exit(0);
+        }
+        sleep(1);
+        
+#else
         if (killFirst){
             
             if (killPid != 0){
@@ -1332,7 +1353,7 @@ main (int argc, char **argv)
                 argv[2]);
         
         exit(0);
-        
+#endif
     }
     
     
