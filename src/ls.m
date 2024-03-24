@@ -856,7 +856,7 @@ dumpPlugin (NSObject *PluginRef, int Verbose)
     
     CFStringRef out = CFStringCreateWithFormat(kCFAllocatorDefault,
                                                NULL, CFSTR("\t%@ (%@) - %@"),
-                                               pluginName,pluginID, CFUUIDCreateString(kCFAllocatorDefault, pluginUUID));
+                                               pluginName,pluginID, [pluginUUID UUIDString]);
     
     CFShow(out);
     
